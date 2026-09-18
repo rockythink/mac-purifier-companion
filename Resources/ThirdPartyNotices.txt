@@ -1,0 +1,128 @@
+Mac 净化器伴侣 — Third-Party Notices
+====================================
+
+Mac 净化器伴侣 (MacFanLink) itself is distributed under the GNU General Public License,
+version 3 only. The complete license text is in the top-level LICENSE file.
+Project copyright: Copyright (c) 2026 Elazer.
+SPDX-License-Identifier for original project code: GPL-3.0-only.
+Third-party materials retain the licenses and copyright notices listed below.
+
+This file identifies third-party material distributed with Mac 净化器伴侣. The
+notices below do not alter the terms of the corresponding upstream licenses.
+
+python-miio 0.5.12
+------------------
+Copyright and authorship: Teemu R and python-miio contributors.
+Upstream: https://github.com/rytilahti/python-miio/tree/0.5.12
+Package metadata: https://raw.githubusercontent.com/rytilahti/python-miio/0.5.12/pyproject.toml
+License: GNU General Public License version 3 only (GPL-3.0-only).
+The complete license text is the top-level LICENSE file.
+
+macmon 0.8.2
+------------
+Copyright (c) 2024 vladkens
+Upstream: https://github.com/vladkens/macmon/tree/v0.8.2
+License: MIT
+
+MIT License
+
+Copyright (c) 2024 vladkens
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Xiaomi-cloud-tokens-extractor
+-----------------------------
+Pinned upstream revision: c4db715dace9806e905153c2977608873e8ab7c9
+Copyright (c) 2020 Piotr Machowski
+Upstream: https://github.com/PiotrMachowski/Xiaomi-cloud-tokens-extractor/tree/c4db715dace9806e905153c2977608873e8ab7c9
+License: MIT
+
+MIT License
+
+Copyright (c) 2020 Piotr Machowski
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Stats AppleSMC ABI reference
+----------------------------
+The AppleSMC request layout in Sources/FanHelper/AppleSMC.swift was adapted
+from exelban/stats, SMC/smc.swift: https://github.com/exelban/stats
+License: MIT
+
+MIT License
+
+Copyright (c) 2019 Serhiy Mytrovtsiy
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Bundled Python runtime and Python dependencies
+----------------------------------------------
+The application distribution stores the Python runtime and locked dependency
+license texts under Contents/Resources/licenses/python/. Corresponding locked
+Python, CPython, and python-build-standalone source archives are distributed
+under third_party/sources/python/ in the source ZIP, with their SHA256SUMS in
+that directory. The source ZIP copies the generated notices to
+third_party/python-licenses/. macmon source is distributed separately under
+third_party/sources/macmon/. Those components remain under their respective
+upstream licenses; consult those directories for exact copyright notices and
+terms.
+
+Remote Xiaomi product images and catalog metadata
+-------------------------------------------------
+Resources/model-catalog.json contains display metadata and HTTPS links to
+product images on Xiaomi-operated FDS hosts. The images are fetched remotely
+at runtime and are not copied into the application or source distribution.
+Product names, trademarks, and remote images remain the property of their
+respective owners; the project GPL license does not license those images or
+trademarks. Public signed image URLs originate in the linked catalog, not in
+user credentials. Each identified model records its public metadata page.
+The independently maintained Xiaomi Miot Spec index is https://home.miot-spec.com/.
+No affiliation, endorsement, or additional image-use permission is claimed.

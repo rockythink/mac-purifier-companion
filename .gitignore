@@ -1,0 +1,12 @@
+.local/
+.venv/
+.build/
+dist/
+__pycache__/
+.DS_Store
+*.py[cod]
+.env
+.env.*
+*.pem
+*.p12
+*.p8

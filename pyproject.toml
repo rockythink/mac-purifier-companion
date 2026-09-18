@@ -1,0 +1,15 @@
+[project]
+name = "mac-xiaomi-fan-link-runtime"
+version = "1.0.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "python-miio==0.5.12",
+    "keyring<26",
+    "requests<3",
+    "pycryptodome<4",
+    "Pillow<13",
+    "colorama<1",
+]
+
+[tool.uv]
+package = false

@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "models": {
+    "zhimi.airpurifier.v1": {
+      "name": "小米空气净化器",
+      "imageURL": "https://cnbj1.fds.api.xiaomi.com/iotweb-product-center/18.png?GalaxyAccessKeyId=AKVGLQWBOVIRQ3XLEW&Expires=9223372036854775807&Signature=OW0y++E6yqufYX9kJpxy1Jb1lMA=",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.v1"
+    },
+    "zhimi.airpurifier.v2": {
+      "name": "小米空气净化器",
+      "imageURL": "https://cnbj1.fds.api.xiaomi.com/iotweb-product-center/34.png?GalaxyAccessKeyId=AKVGLQWBOVIRQ3XLEW&Expires=9223372036854775807&Signature=oE42O/DGiNXRQJn9i0U6tkI7w8k=",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.v2"
+    },
+    "zhimi.airpurifier.v3": {
+      "name": "小米空气净化器",
+      "imageURL": "https://cnbj1.fds.api.xiaomi.com/iotweb-product-center/47.png?GalaxyAccessKeyId=AKVGLQWBOVIRQ3XLEW&Expires=9223372036854775807&Signature=vsFNDIcc2wHiprDImX9DXXiGYOM=",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.v3"
+    },
+    "zhimi.airpurifier.v5": {
+      "name": "小米空气净化器",
+      "imageURL": "https://cnbj1.fds.api.xiaomi.com/iotweb-product-center/80.png?GalaxyAccessKeyId=AKVGLQWBOVIRQ3XLEW&Expires=9223372036854775807&Signature=rrmV+LIqEdef/firYkleWvXdBMc=",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.v5"
+    },
+    "zhimi.airpurifier.v6": {
+      "name": "米家空气净化器 Pro",
+      "imageURL": "https://cnbj1.fds.api.xiaomi.com/iotweb-product-center/322.png?GalaxyAccessKeyId=AKVGLQWBOVIRQ3XLEW&Expires=9223372036854775807&Signature=iy1eV+8YmAuJr0fy0+LYh8moUbc=",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.v6"
+    },
+    "zhimi.airpurifier.v7": {
+      "name": "小米空气净化器 Pro",
+      "imageURL": "https://cnbj1.fds.api.xiaomi.com/iotweb-product-center/630.png?GalaxyAccessKeyId=AKVGLQWBOVIRQ3XLEW&Expires=9223372036854775807&Signature=IR3vM1w8Ejech6QG0HvruXmH7rU=",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.v7"
+    },
+    "zhimi.airpurifier.m1": {
+      "name": "小米空气净化器 2",
+      "imageURL": "https://cnbj1.fds.api.xiaomi.com/iotweb-product-center/100.png?GalaxyAccessKeyId=AKVGLQWBOVIRQ3XLEW&Expires=9223372036854775807&Signature=m8rTUCSC4C5WVQ3OKdRlrM+0jI0=",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.m1"
+    },
+    "zhimi.airpurifier.m2": {
+      "name": "小米空气净化器 2",
+      "imageURL": "https://cnbj1.fds.api.xiaomi.com/iotweb-product-center/455.png?GalaxyAccessKeyId=AKVGLQWBOVIRQ3XLEW&Expires=9223372036854775807&Signature=HWq7kQWTNsn9Fsx7w/XWEYE7+D8=",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.m2"
+    },
+    "zhimi.airpurifier.ma1": {
+      "name": "zhimi.airpurifier.ma1",
+      "imageURL": null,
+      "sourceURL": null
+    },
+    "zhimi.airpurifier.ma2": {
+      "name": "小米米家空气净化器 2S",
+      "imageURL": "https://cnbj1.fds.api.xiaomi.com/iotweb-product-center/590.png?GalaxyAccessKeyId=AKVGLQWBOVIRQ3XLEW&Expires=9223372036854775807&Signature=cS6/RtkLNaQTyBDodl56EHHQxXM=",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.ma2"
+    },
+    "zhimi.airpurifier.sa1": {
+      "name": "zhimi.airpurifier.sa1",
+      "imageURL": null,
+      "sourceURL": null
+    },
+    "zhimi.airpurifier.sa2": {
+      "name": "米家空气净化器 MAX / MAX 增强版",
+      "imageURL": "https://cnbj1.fds.api.xiaomi.com/iotweb-product-center/593.png?GalaxyAccessKeyId=AKVGLQWBOVIRQ3XLEW&Expires=9223372036854775807&Signature=mYoRJ8XAsFGN2cwlPc38GXDqMfY=",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.sa2"
+    },
+    "zhimi.airpurifier.mc1": {
+      "name": "Mi Air Purifier 2S",
+      "imageURL": "https://cdn.awssgp0.fds.api.mi-img.com/miio.files/developer_1551944798iumnasl0.png",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.mc1"
+    },
+    "zhimi.airpurifier.mc2": {
+      "name": "Mi Air Purifier 2H",
+      "imageURL": "https://cdn.awssgp0.fds.api.mi-img.com/miio.files/developer_15470144879uw2ei4h.png",
+      "sourceURL": "https://home.miot-spec.com/spec/zhimi.airpurifier.mc2"
+    }
+  }
+}
