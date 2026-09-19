@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-VERSION="${MACFANLINK_VERSION:-1.5.1}"
+VERSION="${MACFANLINK_VERSION:-0.1.0}"
 DIST="$ROOT/dist"
 APP="$DIST/MacFanLink.app"
 BUILD_ROOT="$ROOT/.build/distribution-package"
