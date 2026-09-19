@@ -50,6 +50,31 @@ class LinkRulesTests(unittest.TestCase):
         decision = rules.update(60, 281)
         self.assertEqual(decision.target, "standby")
 
+    def _descending_with_exit_progress(self):
+        rules = RuleEngine(self.config, "high")
+        self.assertIsNone(rules.update(70, 0))
+        for now in range(2, 180, 2):
+            self.assertIsNone(rules.update(60, now))
+        decision = rules.update(60, 180)
+        self.assertEqual(decision.target, "medium")
+        rules.commit(decision.target, 180)
+        return rules
+
+    def test_continuous_low_temperature_survives_high_to_medium(self):
+        rules = self._descending_with_exit_progress()
+        decision = rules.update(60, 182)
+        self.assertIsNotNone(decision)
+        self.assertEqual(decision.target, "standby")
+
+    def test_preserved_exit_progress_still_resets_after_interruption(self):
+        for interrupted_temperature in (self.config.exitThreshold + 1, None):
+            with self.subTest(temperature=interrupted_temperature):
+                rules = self._descending_with_exit_progress()
+                self.assertIsNone(rules.update(interrupted_temperature, 182))
+                for now in range(184, 364, 2):
+                    self.assertIsNone(rules.update(60, now))
+                self.assertEqual(rules.update(60, 364).target, "standby")
+
     def test_stale_gap_and_invalid_sample_reset_dwell(self):
         rules = RuleEngine(self.config)
         rules.update(75, 0)

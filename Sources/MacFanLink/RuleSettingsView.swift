@@ -90,6 +90,9 @@ struct RuleSettingsView: View {
                     Text("最爱等级是设备的离散档位，不对应固定 RPM。上方状态栏仅显示设备当前实测 RPM；它只读，且不会由等级推算。")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    Text("退出接管会恢复接管前的模式和最爱等级。原来是自动模式时，转速由净化器自行决定，不保证最低档。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
             .padding(14)
@@ -197,6 +200,9 @@ struct RuleSettingsView: View {
                     .disabled(isSaving)
                 }
             }
+            Text("模板只修改温度与计时，保留当前中高档位；安静优先不保证更少切换。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             Divider()
 

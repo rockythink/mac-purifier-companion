@@ -389,6 +389,21 @@ struct MenuPopoverView: View {
                 ManualControlButton(controller: controller)
             }
 
+            if controller.connected, let status = controller.status, status.account.paired {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(status.reason)
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if status.mode == "enabled" || status.mode == "dryRun" {
+                        Text("退出接管恢复原来的模式和档位，不保证最低转速。")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
             secondaryReadings
         }
         .padding(.horizontal, 14)

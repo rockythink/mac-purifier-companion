@@ -18,9 +18,9 @@ enum RuleTemplate: String, CaseIterable, Identifiable {
 
     var summary: String {
         switch self {
-        case .quiet: "偏好更少调档与较低噪声，响应会更从容。"
-        case .balanced: "在响应速度与调档频率之间取中间偏好。"
-        case .cooling: "偏好更早升档、较晚回落，调档可能更频繁。"
+        case .quiet: "较晚介入、较早退出。"
+        case .balanced: "适度介入与回落。"
+        case .cooling: "较早介入、较久保持。"
         }
     }
 
@@ -39,7 +39,9 @@ enum RuleTemplate: String, CaseIterable, Identifiable {
         case .quiet:
             values = (75, 90, 82, 68, 120, 120, 120)
         case .balanced:
-            values = (70, 85, 78, 65, 60, 180, 60)
+            let defaults = LinkConfig.defaults
+            values = (defaults.mediumThreshold, defaults.highThreshold, defaults.downThreshold,
+                      defaults.exitThreshold, defaults.riseSeconds, defaults.fallSeconds, defaults.minAdjustSeconds)
         case .cooling:
             values = (65, 80, 73, 60, 30, 240, 60)
         }

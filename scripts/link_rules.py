@@ -14,9 +14,9 @@ class Config:
     mediumThreshold: float = 70.0
     highThreshold: float = 85.0
     downThreshold: float = 78.0
-    exitThreshold: float = 63.0
+    exitThreshold: float = 65.0
     riseSeconds: float = 60.0
-    fallSeconds: float = 180.0
+    fallSeconds: float = 120.0
     minAdjustSeconds: float = 60.0
     sampleSeconds: float = 20.0
     staleSeconds: float = 180.0
@@ -100,6 +100,41 @@ class RuleEngine:
             if name in required
         ]
 
+    def waiting_reason(self, temperature: float) -> str:
+        """Describe the latest valid sample without interpolating or advancing dwell."""
+        assert self._last_now is not None
+        if self.phase == "high":
+            phase_label = "维持高档"
+            name = "exit" if "exit" in self._since else "down"
+        elif self.phase == "medium":
+            phase_label = "维持中档"
+            name = "high" if "high" in self._since else "exit"
+        else:
+            phase_label = "监测中"
+            name = "high" if "high" in self._since else "medium"
+
+        if name == "exit":
+            action, threshold = "退出接管", self.config.exitThreshold
+        elif name == "down":
+            action, threshold = "降回中档", self.config.downThreshold
+        elif name == "high":
+            action, threshold = "升至高档", self.config.highThreshold
+        else:
+            action, threshold = "升至中档", self.config.mediumThreshold
+        falling = name in ("exit", "down")
+        comparison = "≤" if falling else "≥"
+        duration = self.config.fallSeconds if falling else self.config.riseSeconds
+        condition = f"{phase_label}：{action}需 CPU {comparison}{threshold:g}°C 持续 {duration:g} 秒"
+        started = self._since.get(name)
+        if started is None:
+            return f"{condition}；当前 {temperature:.1f}°C，条件未满足，计时 0 秒"
+        elapsed = max(0.0, self._last_now - started)
+        if name != "exit" and elapsed >= duration and self._last_adjust is not None:
+            remaining = self.config.minAdjustSeconds - (self._last_now - self._last_adjust)
+            if remaining > 0:
+                return f"{condition}；温度条件已满足，最短调档间隔还剩 {math.ceil(remaining)} 秒"
+        return f"{condition}；已连续观测 {int(elapsed)} / {duration:g} 秒"
+
     def update(self, temperature: float | None, now: float, *, valid: bool = True) -> Decision | None:
         if not math.isfinite(now):
             self.reset_dwell()
@@ -145,11 +180,15 @@ class RuleEngine:
         return None
 
     def commit(self, target: Phase, now: float) -> None:
+        # Dropping one stage does not interrupt an already continuous low-temperature interval.
+        exit_started = self._since.get("exit") if self.phase == "high" and target == "medium" else None
         if target != self.phase:
             if target != "standby":
                 self._last_adjust = now
             self.phase = target
         self._since.clear()
+        if exit_started is not None:
+            self._since["exit"] = exit_started
         self._last_now = now
 
 

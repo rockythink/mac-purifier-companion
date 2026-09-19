@@ -725,14 +725,20 @@ class Worker:
                     self.reason = decision.reason.replace("计划", "仅演练计划")
                     self.log(self.reason)
                 elif decision.target == "standby":
-                    self._restore("降温退出恢复")
-                    self.reason = "温度已回落，退出接管"
+                    if self._restore("降温退出恢复"):
+                        self.reason = "温度已回落，已恢复接管前状态（不是固定最低档）"
+                    else:
+                        self.reason = self.command_detail
                 else:
                     level = self.config.mediumLevel if decision.target == "medium" else self.config.highLevel
                     if level is not None and self._write_level(level):
                         self.rule.commit(decision.target, now_mono)
                         self.reason = "已进入中档" if decision.target == "medium" else "已进入高档"
                         self.log(self.reason)
+            else:
+                self.reason = self.rule.waiting_reason(cpu)
+                if self.mode == "dryRun":
+                    self.reason = "仅演练 · " + self.reason
         self.status_dirty = True
         
 
