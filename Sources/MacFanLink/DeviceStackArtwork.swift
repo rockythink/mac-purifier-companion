@@ -9,6 +9,7 @@ struct DeviceStackArtwork: View {
     let imageURL: String?
     let height: CGFloat
     @State private var artwork = PurifierArtwork.shared
+    @State private var photoStore = ProductPhotoStore.shared
 
     private var calibrated: Bool {
         ["Mac16,10", "Mac16,11"].contains(mac.identifier) && purifierModel == "zhimi.airpurifier.m1"
@@ -16,25 +17,40 @@ struct DeviceStackArtwork: View {
 
     var body: some View {
         let scale = height / 570
+        let purifierURL = imageURL ?? ProductPhotoStore.fallbackPurifierURL
+        // Uncalibrated Macs get a taller photo slot; reserving it even for the
+        // schematic fallback keeps the purifier from shifting when the photo lands.
+        let macSlot: CGFloat = calibrated ? 50 : 80
         VStack(spacing: 0) {
-            Image(nsImage: mac.frontImage)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 127 * scale, height: 50 * scale, alignment: .bottom)
             Group {
-                if artwork.url == imageURL, let image = artwork.image {
+                if let photo = photoStore.photo(for: mac.name) {
+                    Image(nsImage: photo)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: (calibrated ? 127 : 150) * scale, height: macSlot * scale, alignment: .bottom)
+                } else {
+                    Image(nsImage: mac.frontImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 127 * scale, height: 50 * scale, alignment: .bottom)
+                }
+            }
+            .frame(height: macSlot * scale, alignment: .bottom)
+            Group {
+                if artwork.url == purifierURL, let image = artwork.image {
                     Image(nsImage: image).resizable().scaledToFill()
                 } else {
                     Image(systemName: "air.purifier").resizable().scaledToFit().foregroundStyle(.secondary)
                 }
             }
-            .frame(width: 240 * scale, height: 520 * scale)
+            .frame(width: 240 * scale, height: (570 - macSlot) * scale)
             .clipped()
         }
         .frame(width: 240 * scale, height: height)
         .accessibilityLabel("Mac 位于空气净化器顶部，固定叠放")
         .help(calibrated ? "机身尺寸同比例：Mac mini 12.7 × 12.7 × 5 cm；净化器 24 × 24 × 52 cm。" : "固定叠放示意；当前型号暂无尺寸标定。")
-        .task(id: imageURL) { artwork.load(imageURL) }
+        .task(id: imageURL) { artwork.load(purifierURL) }
+        .task(id: mac.name) { photoStore.load(family: mac.name) }
     }
 }
 

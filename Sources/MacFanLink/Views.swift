@@ -569,8 +569,12 @@ struct ProductImage: View {
     let presentation: ProductImagePresentation
 
     var body: some View {
+        // Hero slots represent "your purifier": before pairing, show the generic
+        // product photo instead of the schematic symbol. Thumbnails keep the
+        // symbol so an unknown model never borrows another model's photo.
+        let effectiveURL = urlString ?? (presentation == .hero ? ProductPhotoStore.fallbackPurifierURL : nil)
         Group {
-            if let urlString, let url = URL(string: urlString) {
+            if let effectiveURL, let url = URL(string: effectiveURL) {
                 AsyncImage(url: url, transaction: Transaction(animation: reduceMotion ? nil : .easeOut(duration: 0.24))) { phase in
                     switch phase {
                     case let .success(image):

@@ -144,6 +144,7 @@ struct HistorySettingsView: View {
             if let selectedDeviceId = history.selectedDeviceId, !selectedDeviceId.isEmpty {
                 let points = history.points.filter { $0.deviceId == selectedDeviceId }
                 let events = history.events.filter { $0.deviceId == selectedDeviceId }
+                linkageChart(points, events: events)
                 LazyVGrid(columns: chartColumns, alignment: .leading, spacing: 12) {
                     purifierRPMChart(points, events: events)
                     purifierLevelChart(points, events: events)
@@ -359,6 +360,98 @@ struct HistorySettingsView: View {
             .accessibilityLabel("所选历史净化器最爱模式实际等级趋势")
         }
     }
+    /// 温度（左轴 °C）与净化器实际转速（右轴 RPM）共享同一时间轴，
+    /// 直接回答「净化器有没有跟着温度走」。转速只按真实上报值缩放进温度域，
+    /// 右轴刻度换算回 RPM 标注；两轴都读真实读数，不做归一化。
+    private func linkageChart(_ points: [HistoryPoint], events: [HistoryEvent]) -> some View {
+        let temps = metricSamples(points, name: "CPU 温度", value: { $0.cpu })
+        let rpms = metricSamples(points, name: "净化器", value: { $0.rpm })
+        let tempValues = temps.map(\.value)
+        let rpmValues = rpms.map(\.value)
+        let tLo = (tempValues.min() ?? 40).rounded(.down) - 2
+        let tHi = (tempValues.max() ?? 80).rounded(.up) + 2
+        let rMin = rpmValues.min() ?? 0
+        let rMax = rpmValues.max() ?? 0
+        let rSpan = max(rMax - rMin, 50)
+        let rLo = max(0, rMin - rSpan * 0.1)
+        let rHi = rMax + rSpan * 0.1
+        func mapRPM(_ value: Double) -> Double { tLo + (value - rLo) / (rHi - rLo) * (tHi - tLo) }
+        let rpmTicks = (0...3).map { rLo + (rHi - rLo) * Double($0) / 3 }
+
+        return compactChart(title: "联动对照", subtitle: "CPU 温度（左轴）× 净化器实际转速（右轴）· 同一样本，不作推算") {
+            HStack(spacing: 14) {
+                HStack(spacing: 5) {
+                    Capsule().fill(.orange).frame(width: 14, height: 2.5)
+                    Text("CPU 温度 · °C")
+                }
+                HStack(spacing: 5) {
+                    Capsule().fill(.cyan).frame(width: 14, height: 2.5)
+                    Text("净化器 RPM · 右轴")
+                }
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+
+            Chart {
+                ForEach(temps) { sample in
+                    LineMark(
+                        x: .value("时间", sample.date),
+                        y: .value("温度", sample.value),
+                        series: .value("连续区段", sample.series)
+                    )
+                    .foregroundStyle(Color.orange)
+                    .lineStyle(StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
+                    .interpolationMethod(.linear)
+                }
+                ForEach(rpms) { sample in
+                    LineMark(
+                        x: .value("时间", sample.date),
+                        y: .value("转速", mapRPM(sample.value)),
+                        series: .value("连续区段", sample.series)
+                    )
+                    .foregroundStyle(Color.cyan)
+                    .lineStyle(StrokeStyle(lineWidth: 1.2, lineCap: .round, lineJoin: .round))
+                    .interpolationMethod(.stepCenter)
+                }
+                ForEach(events) { event in
+                    RuleMark(x: .value("净化器事件", Date(timeIntervalSince1970: event.timestamp)))
+                        .foregroundStyle(Color.cyan.opacity(0.28))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                }
+            }
+            .chartLegend(.hidden)
+            .chartYScale(domain: tLo...tHi)
+            .chartYAxis {
+                AxisMarks(position: .leading) { value in
+                    AxisGridLine()
+                    AxisValueLabel {
+                        if let temp = value.as(Double.self) { Text("\(Int(temp))°") }
+                    }
+                }
+                AxisMarks(position: .trailing, values: rpmTicks.map(mapRPM)) { value in
+                    AxisValueLabel {
+                        if let position = value.as(Double.self) {
+                            let rpm = rLo + (position - tLo) / (tHi - tLo) * (rHi - rLo)
+                            Text("\(Int(rpm.rounded()))")
+                                .foregroundStyle(Color.cyan.opacity(0.8))
+                        }
+                    }
+                }
+            }
+            .chartXScale(domain: timeDomain)
+            .chartXAxis { AxisMarks(values: .automatic(desiredCount: 3)) { AxisGridLine(); AxisTick(); AxisValueLabel(format: timeAxisFormat, anchor: .topTrailing) } }
+            .frame(height: 140)
+            .overlay {
+                if temps.isEmpty || rpms.isEmpty {
+                    Text("此范围没有可对照的温度与转速样本")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .accessibilityLabel("CPU 温度与净化器实际转速对照趋势；转速按右侧独立刻度显示，附净化器事件标记")
+        }
+    }
+
 
     private func compactChart<Content: View>(
         title: String,
