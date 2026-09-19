@@ -236,6 +236,7 @@ struct MenuPopoverView: View {
     @State private var showingErrorDetails = false
     @State private var detailedErrorMessage = ""
     @State private var macIdentity = MacDeviceIdentity.shared
+    @State private var menuVisible = false
     let controller: WorkerController
 
     var body: some View {
@@ -262,6 +263,7 @@ struct MenuPopoverView: View {
             footer
         }
         .frame(width: 600, alignment: .top)
+        .background(MenuWindowVisibility(isVisible: $menuVisible))
         .alert("操作失败", isPresented: $showingErrorDetails) {
             Button("关闭", role: .cancel) {}
         } message: {
@@ -270,17 +272,74 @@ struct MenuPopoverView: View {
         .task {
             await macIdentity.load()
         }
-        .task {
+        .task(id: menuVisible) {
+            guard menuVisible else { return }
             controller.start()
             while !Task.isCancelled {
                 controller.requestProcesses()
                 do { try await Task.sleep(for: .seconds(8)) } catch { return }
             }
         }
-        .task {
+        .task(id: menuVisible) {
+            guard menuVisible else { return }
             while !Task.isCancelled {
                 controller.requestMenuHistory()
                 do { try await Task.sleep(for: .seconds(20)) } catch { return }
+            }
+        }
+    }
+
+    /// MenuBarExtra retains its content after closing, so task lifetime alone is not visibility.
+    private struct MenuWindowVisibility: NSViewRepresentable {
+        @Binding var isVisible: Bool
+
+        func makeNSView(context: Context) -> VisibilityAnchor {
+            let view = VisibilityAnchor()
+            view.onVisibilityChange = { isVisible = $0 }
+            return view
+        }
+
+        func updateNSView(_ view: VisibilityAnchor, context: Context) {
+            view.onVisibilityChange = { isVisible = $0 }
+        }
+
+        static func dismantleNSView(_ view: VisibilityAnchor, coordinator: ()) {
+            view.stopObserving()
+        }
+
+        final class VisibilityAnchor: NSView {
+            var onVisibilityChange: ((Bool) -> Void)?
+            private var pendingUpdate: Task<Void, Never>?
+
+            override func viewDidMoveToWindow() {
+                super.viewDidMoveToWindow()
+                NotificationCenter.default.removeObserver(self)
+                if let window {
+                    NotificationCenter.default.addObserver(
+                        self, selector: #selector(visibilityChanged(_:)),
+                        name: NSWindow.didChangeOcclusionStateNotification, object: window
+                    )
+                }
+                visibilityChanged()
+            }
+
+            @objc private func visibilityChanged(_ notification: Notification? = nil) {
+                pendingUpdate?.cancel()
+                // Defer attachment notifications out of SwiftUI layout; read the latest window state.
+                pendingUpdate = Task { @MainActor [weak self] in
+                    guard !Task.isCancelled, let self else { return }
+                    let visible = self.window?.isVisible == true
+                        && self.window?.occlusionState.contains(.visible) == true
+                    self.onVisibilityChange?(visible)
+                    self.pendingUpdate = nil
+                }
+            }
+
+            func stopObserving() {
+                NotificationCenter.default.removeObserver(self)
+                pendingUpdate?.cancel()
+                pendingUpdate = nil
+                onVisibilityChange = nil
             }
         }
     }
