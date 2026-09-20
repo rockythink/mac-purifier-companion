@@ -109,6 +109,9 @@ mkdir -p "$APP/Contents/Resources/vendor"
 while IFS= read -r -d '' vendor_file; do
     /usr/bin/ditto "$vendor_file" "$APP/Contents/Resources/vendor/$(basename "$vendor_file")"
 done < <(find "$ROOT/Resources/vendor" -maxdepth 1 -type f -name '*.py' -print0)
+if [[ -f "$ROOT/Resources/AppIcon.icns" ]]; then
+    /usr/bin/ditto "$ROOT/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
+fi
 for resource in ThirdPartyNotices.txt; do
     if [[ -f "$ROOT/Resources/$resource" ]]; then
         /usr/bin/ditto "$ROOT/Resources/$resource" "$APP/Contents/Resources/$resource"
@@ -188,6 +191,8 @@ info = {
     "LSUIElement": True,
     "NSHighResolutionCapable": True,
     "NSLocalNetworkUsageDescription": "通过局域网读取并在你启用后调节已配对的小米空气净化器。",
+    "CFBundleIconFile": "AppIcon",
+    "CFBundleIconName": "AppIcon",
 }
 with open(path, "wb") as output:
     plistlib.dump(info, output, sort_keys=True)
