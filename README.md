@@ -4,6 +4,10 @@
 
 **[下载最新版 → Releases](https://github.com/rockythink/mac-purifier-companion/releases)**
 
+<img width="1292" height="1426" alt="CleanShot 2026-09-20 at 10 39 58@2x" src="https://github.com/user-attachments/assets/f73ad9b7-2e98-48d9-8e2c-5227568c6f44" />
+<img width="2184" height="1624" alt="CleanShot 2026-09-20 at 10 41 25@2x" src="https://github.com/user-attachments/assets/d589c1d3-81c2-4426-9578-09e7dd980650" />
+
+
 ## 功能
 
 - **菜单栏实时状态**：CPU 温度、负载、内存、风扇转速，净化器实测 RPM
