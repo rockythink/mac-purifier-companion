@@ -3,8 +3,7 @@ import Charts
 import SwiftUI
 
 enum MenuBarAppearance: String, CaseIterable, Identifiable {
-    case singleIcon
-    case dualIcon
+    case iconOnly = "singleIcon"
     case iconsAndTemperature
     case iconsAndPurifierRPM
 
@@ -12,12 +11,16 @@ enum MenuBarAppearance: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    static func resolve(_ rawValue: String) -> MenuBarAppearance {
+        if rawValue == "dualIcon" { return .iconOnly }
+        return MenuBarAppearance(rawValue: rawValue) ?? .iconsAndTemperature
+    }
+
     var title: String {
         switch self {
-        case .singleIcon: "单图标"
-        case .dualIcon: "双图标"
+        case .iconOnly: "仅图标"
         case .iconsAndTemperature: "图标与温度"
-        case .iconsAndPurifierRPM: "图标与净化器转速"
+        case .iconsAndPurifierRPM: "图标与转速"
         }
     }
 }
@@ -26,28 +29,131 @@ struct MenuBarAppearancePicker: View {
     @AppStorage(MenuBarAppearance.storageKey) private var appearanceRawValue = MenuBarAppearance.iconsAndTemperature.rawValue
 
     var body: some View {
-        Picker("菜单栏显示", selection: $appearanceRawValue) {
+        Picker("菜单栏显示", selection: selection) {
             ForEach(MenuBarAppearance.allCases) { appearance in
                 Text(appearance.title).tag(appearance.rawValue)
             }
         }
-        .help("可显示 CPU 温度或净化器实测转速；读数不可用时显示 —。")
+        .help("图标右下角的状态点表示联动状态；可附带显示 CPU 温度或净化器实测转速，读数不可用时显示 —。")
+    }
+
+    private var selection: Binding<String> {
+        Binding(
+            get: { MenuBarAppearance.resolve(appearanceRawValue).rawValue },
+            set: { appearanceRawValue = $0 }
+        )
     }
 }
 
-private struct StatusIndicator {
-    let symbol: String
-    let color: Color
-    let description: String
+/// 菜单栏图标右下角的状态点，一眼读出当前联动状态。
+private enum LinkageBadgeKind: String, Equatable {
+    case active       // 接管中（蓝）
+    case armed        // 已启用待介入（绿）
+    case dryRun       // 仅演练（空心琥珀）
+    case idle         // 停止 / 暂停 / 手动 / 未配对（灰）
+    case attention    // 设备离线 / 指标过期（橙）
+    case failure      // 操作失败 / 设备不受支持（红）
+    case unavailable  // 后台未连接（空心灰 + 图标变暗）
 }
 
+private struct LinkageBadge: Equatable {
+    let kind: LinkageBadgeKind
+    let description: String
+
+    var color: Color {
+        switch kind {
+        case .active: .blue
+        case .armed: .green
+        case .dryRun: Color(red: 0.85, green: 0.66, blue: 0.0)
+        case .attention: .orange
+        case .failure: .red
+        case .idle, .unavailable: .gray
+        }
+    }
+
+    /// 空心表示“规则未真实生效”（演练）或“完全未连接”。
+    var isHollow: Bool { kind == .dryRun || kind == .unavailable }
+    var isDimmed: Bool { kind == .unavailable }
+
+    static func resolve(connected: Bool, launching: Bool, status: WorkerStatus?) -> LinkageBadge {
+        guard connected else {
+            return LinkageBadge(kind: .unavailable, description: launching ? "正在连接后台…" : "后台未连接")
+        }
+        guard let status else {
+            return LinkageBadge(kind: .unavailable, description: "正在读取后台状态…")
+        }
+        guard status.account.paired else {
+            return LinkageBadge(kind: .idle, description: "净化器未配对，联动未配置")
+        }
+        guard status.device.supported else {
+            return LinkageBadge(kind: .failure, description: "净化器不受支持，联动不可用")
+        }
+        if status.commandState == "failed" {
+            return LinkageBadge(kind: .failure, description: "最近一次净化器操作失败")
+        }
+        guard status.device.reachable else {
+            return LinkageBadge(kind: .attention, description: "净化器离线")
+        }
+        if status.system.stale || status.temperature.stale {
+            return LinkageBadge(kind: .attention, description: "本机监测指标已过期")
+        }
+        switch status.mode {
+        case "enabled":
+            if status.owner {
+                let powerNote = status.device.power == false ? "（净化器当前已关机）" : ""
+                return LinkageBadge(kind: .active, description: "联动接管中：正在按 Mac 状态调节净化器\(powerNote)")
+            }
+            return LinkageBadge(kind: .armed, description: "联动已启用：等待介入条件")
+        case "dryRun":
+            return LinkageBadge(kind: .dryRun, description: "仅演练：执行规则但不写设备")
+        case "manual":
+            return LinkageBadge(kind: .idle, description: "手动控制净化器")
+        case "paused":
+            return LinkageBadge(kind: .idle, description: "联动已暂停")
+        case "stopped":
+            return LinkageBadge(kind: .idle, description: "联动已停止")
+        default:
+            return LinkageBadge(kind: .idle, description: "联动状态读取中…")
+        }
+    }
+}
+
+private struct LinkageStatusDot: View {
+    let badge: LinkageBadge
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        // 浅色菜单栏上灰色需要加深一档才读得出。
+        let color = badge.kind == .idle && colorScheme == .light ? Color(white: 0.38) : badge.color
+        ZStack {
+            Circle().fill(.white)  // 深色壁纸上的分隔描边
+            if badge.isHollow {
+                Circle().strokeBorder(color, lineWidth: 1.5).padding(0.8)
+            } else {
+                Circle().fill(color).padding(0.8)
+            }
+        }
+        .frame(width: 6.8, height: 6.8)
+    }
+}
+
+private struct MenuBarStatusIcon: View {
+    let badge: LinkageBadge
+
+    var body: some View {
+        Image(systemName: "fanblades.fill")
+            .font(.system(size: 15))
+            .foregroundStyle(Color.primary.opacity(badge.isDimmed ? 0.35 : 1))
+            .overlay(alignment: .bottomTrailing) {
+                LinkageStatusDot(badge: badge)
+                    .offset(x: 3.2, y: 3.2)
+            }
+    }
+}
+
+
 private struct MenuIconKey: Equatable {
-    let appearance: MenuBarAppearance
-    let hostSymbol: String
-    let hostColor: Color
-    let purifierSymbol: String
-    let purifierColor: Color
-    let badge: Bool
+    let kind: LinkageBadgeKind
     let scheme: ColorScheme
     let scale: CGFloat
 }
@@ -75,13 +181,14 @@ struct MenuBarStatusLabel: View {
     let controller: WorkerController
 
     var body: some View {
-        HStack(spacing: 4) {
-            Image(nsImage: combinedIcon).renderingMode(.original)
+        HStack(spacing: 5) {
+            Image(nsImage: statusIcon).renderingMode(.original)
 
             if let readoutText {
                 Text(readoutText)
                     .monospacedDigit()
                     .contentTransition(.numericText())
+                    .foregroundStyle(appearance == .iconsAndTemperature ? readoutTint : .primary)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -94,23 +201,20 @@ struct MenuBarStatusLabel: View {
         }
     }
 
-    private var combinedIcon: NSImage {
-        let host = hostIndicator
-        let purifier = purifierIndicator
+    private var linkageBadge: LinkageBadge {
+        LinkageBadge.resolve(connected: controller.connected, launching: controller.launching, status: controller.status)
+    }
+
+    private var statusIcon: NSImage {
+        let badge = linkageBadge
         let scale = NSScreen.main?.backingScaleFactor ?? 2
-        let key = MenuIconKey(appearance: appearance, hostSymbol: host.symbol, hostColor: host.color,
-                              purifierSymbol: purifier.symbol, purifierColor: purifier.color,
-                              badge: purifierNeedsBadge, scheme: colorScheme, scale: scale)
+        let key = MenuIconKey(kind: badge.kind, scheme: colorScheme, scale: scale)
         return iconCache.image(for: key) {
-            // MenuBarExtra extracts a single image from its label. Rasterize the
-            // icon group together so both indicators survive that extraction.
-            let renderer = ImageRenderer(content: HStack(spacing: 5) {
-                hostImage
-                if appearance != .singleIcon { statusImage(purifier) }
-            }
-            .font(.system(size: 14))
-            .padding(3)
-            .environment(\.colorScheme, colorScheme))
+            // MenuBarExtra 只会从 label 中提取一张图片；把图标与状态点一起光栅化，
+            // 避免状态点在提取过程中被丢弃。
+            let renderer = ImageRenderer(content: MenuBarStatusIcon(badge: badge)
+                .padding(3)
+                .environment(\.colorScheme, colorScheme))
             renderer.scale = scale
             let image = renderer.nsImage ?? NSImage(systemSymbolName: "questionmark.circle", accessibilityDescription: "图标渲染不可用")!
             image.isTemplate = false
@@ -118,92 +222,15 @@ struct MenuBarStatusLabel: View {
         }
     }
 
-    private var hostImage: some View {
-        statusImage(hostIndicator)
-            .overlay(alignment: .bottomTrailing) {
-                if appearance == .singleIcon, purifierNeedsBadge {
-                    Image(systemName: purifierIndicator.symbol)
-                        .renderingMode(.original)
-                        .font(.system(size: 7, weight: .bold))
-                        .symbolRenderingMode(.palette)
-                        .foregroundStyle(purifierIndicator.color)
-                        .padding(1)
-                        .background(.background, in: Circle())
-                        .offset(x: 3, y: 3)
-                }
-            }
-    }
-
-    private func statusImage(_ indicator: StatusIndicator) -> some View {
-        Image(systemName: indicator.symbol)
-            .renderingMode(.original)
-            .symbolRenderingMode(.palette)
-            .foregroundStyle(indicator.color)
-            .help(indicator.description)
-    }
-
     private var appearance: MenuBarAppearance {
-        MenuBarAppearance(rawValue: appearanceRawValue) ?? .iconsAndTemperature
-    }
-
-    private var purifierNeedsBadge: Bool {
-        guard controller.connected, let status = controller.status, status.account.paired else { return false }
-        if !status.device.reachable || !status.device.supported || status.commandState == "failed" { return true }
-        return status.device.power != false && status.owner && status.mode != "dryRun"
-    }
-
-    private var hostIndicator: StatusIndicator {
-        guard controller.connected, let status = controller.status else {
-            return StatusIndicator(symbol: "macbook", color: .secondary, description: controller.launching ? "Mac：正在连接后台" : "Mac：后台未连接")
-        }
-        guard !status.system.stale, !status.temperature.stale else {
-            return StatusIndicator(symbol: "exclamationmark.triangle.fill", color: .orange, description: "Mac：监测指标已过期")
-        }
-        let thermal = status.system.thermalState?.lowercased()
-        let pressure = status.system.memoryPressure?.lowercased()
-        if thermal == "critical" || pressure == "critical" {
-            return StatusIndicator(symbol: thermal == "critical" ? "thermometer.high" : "memorychip.fill", color: .red, description: "Mac：\(thermalTitle(status.system.thermalState))，内存压力\(pressureTitle(status.system.memoryPressure))")
-        }
-        if thermal == "serious" || pressure == "warning" || pressure == "warn" {
-            return StatusIndicator(symbol: thermal == "serious" ? "thermometer.high" : "memorychip.fill", color: .orange, description: "Mac：\(thermalTitle(status.system.thermalState))，内存压力\(pressureTitle(status.system.memoryPressure))")
-        }
-        if thermal == "fair" {
-            return StatusIndicator(symbol: "thermometer.medium", color: .yellow, description: "Mac：热状态偏高，内存压力\(pressureTitle(status.system.memoryPressure))")
-        }
-        if thermal == "nominal", pressure == "normal" {
-            return StatusIndicator(symbol: "macbook", color: .green, description: "Mac：热状态正常，内存压力正常")
-        }
-        return StatusIndicator(symbol: "macbook", color: .secondary, description: "Mac：热状态\(thermalTitle(status.system.thermalState))，内存压力\(pressureTitle(status.system.memoryPressure))")
-    }
-
-    private var purifierIndicator: StatusIndicator {
-        guard controller.connected, let status = controller.status else {
-            return StatusIndicator(symbol: "air.purifier", color: .secondary, description: "净化器：等待后台连接")
-        }
-        guard status.account.paired else {
-            return StatusIndicator(symbol: "air.purifier", color: .secondary, description: "净化器：未配对")
-        }
-        guard status.device.reachable else {
-            return StatusIndicator(symbol: "exclamationmark.triangle.fill", color: .orange, description: "净化器：离线")
-        }
-        if !status.device.supported || status.commandState == "failed" {
-            return StatusIndicator(symbol: "exclamationmark.triangle.fill", color: .orange, description: !status.device.supported ? "净化器：设备不受支持" : "净化器：最近操作失败")
-        }
-        guard status.device.power == true else {
-            return StatusIndicator(symbol: "air.purifier", color: status.device.power == false ? .secondary : .orange,
-                                   description: status.device.power == false ? "净化器：已关闭" : "净化器：电源状态未知")
-        }
-        if status.owner, status.mode != "dryRun" {
-            return StatusIndicator(symbol: "air.purifier.fill", color: .blue, description: "净化器：本应用正在接管")
-        }
-        return StatusIndicator(symbol: "air.purifier", color: .secondary, description: status.mode == "dryRun" ? "净化器：仅演练，未写设备" : "净化器：等待规则介入")
+        MenuBarAppearance.resolve(appearanceRawValue)
     }
 
     private var readoutText: String? {
         switch appearance {
         case .iconsAndTemperature: temperatureText
         case .iconsAndPurifierRPM: purifierRPMText
-        case .singleIcon, .dualIcon: nil
+        case .iconOnly: nil
         }
     }
 
@@ -220,8 +247,23 @@ struct MenuBarStatusLabel: View {
         return "\(Int(cpu.rounded()))°"
     }
 
+    /// 过热或内存压力升高时，温度读数变橙/红，补上被移除的 Mac 健康提示。
+    private var readoutTint: Color {
+        guard controller.connected, let status = controller.status, !status.system.stale else { return .primary }
+        let thermal = status.system.thermalState?.lowercased()
+        let pressure = status.system.memoryPressure?.lowercased()
+        if thermal == "critical" || pressure == "critical" { return .red }
+        if thermal == "serious" || thermal == "fair" || pressure == "warning" || pressure == "warn" { return .orange }
+        return .primary
+    }
+
+    private var macStateText: String {
+        guard controller.connected, let status = controller.status, !status.system.stale else { return "Mac 指标不可用" }
+        return "Mac 热状态\(thermalTitle(status.system.thermalState))、内存压力\(pressureTitle(status.system.memoryPressure))"
+    }
+
     private var accessibilityText: String {
-        "\(hostIndicator.description)；\(purifierIndicator.description)；CPU 温度 \(temperatureText)；净化器转速 \(purifierRPMText)"
+        "联动：\(linkageBadge.description)；\(macStateText)；CPU 温度 \(temperatureText)；净化器转速 \(purifierRPMText)"
     }
 
     private func openSettingsWindow(page: SettingsPage) {

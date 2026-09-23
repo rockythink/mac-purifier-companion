@@ -463,7 +463,7 @@ private struct RuntimeSettingsView: View {
                 pageHeader("运行与通知", detail: "管理菜单栏显示、后台启动与持续状态提醒。")
                 ContentSection(title: "菜单栏显示") {
                     MenuBarAppearancePicker()
-                    Text("Mac：绿色正常、橙色警告、红色严重；净化器：蓝色介入、灰色待命、橙色异常。颜色同时配合图标和状态文字。")
+                    Text("图标状态点表示联动：蓝色接管中、绿色已启用待介入、空心琥珀仅演练、灰色停止/暂停/手动、橙色设备离线或指标过期、红色操作失败；空心灰点且图标变暗表示后台未连接。温度读数在过热或内存压力升高时变为橙/红色。")
                         .font(.caption).foregroundStyle(.secondary)
                 }
 
