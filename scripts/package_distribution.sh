@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-VERSION="${MACFANLINK_VERSION:-0.2.0}"
+VERSION="${MACFANLINK_VERSION:-0.3.0}"
 DIST="$ROOT/dist"
 APP="$DIST/MacFanLink.app"
 BUILD_ROOT="$ROOT/.build/distribution-package"
@@ -61,10 +61,23 @@ done < <(find "$ROOT/Resources/vendor" -maxdepth 1 -type f -name '*.py' -print0)
 /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$SOURCE_ROOT" "$SOURCE_ZIP"
 
 mkdir -p "$DMG_ROOT"
-/usr/bin/ditto "$APP" "$DMG_ROOT/MacFanLink.app"
+RUNTIME_ROOT="$APP/Contents/Resources/runtime"
+DMG_APP="$DMG_ROOT/MacFanLink.app"
+restore_runtime_permissions() {
+    /bin/chmod -R a-w "$RUNTIME_ROOT"
+    [[ ! -d "$DMG_APP/Contents/Resources/runtime" ]] \
+        || /bin/chmod -R a-w "$DMG_APP/Contents/Resources/runtime"
+}
+trap restore_runtime_permissions EXIT
+/bin/chmod -R u+w "$RUNTIME_ROOT"
+/usr/bin/ditto "$APP" "$DMG_APP"
+restore_runtime_permissions
+trap - EXIT
+/usr/bin/codesign --verify --deep --strict "$APP"
+/usr/bin/codesign --verify --deep --strict "$DMG_APP"
 ln -s /Applications "$DMG_ROOT/Applications"
-/usr/bin/hdiutil create -quiet -fs HFS+ -format UDZO \
-    -volname "Mac 净化器伴侣 $VERSION" -srcfolder "$DMG_ROOT" "$DMG"
+/usr/sbin/diskutil image create from --format UDZO \
+    --volumeName "Mac 净化器伴侣 $VERSION" "$DMG_ROOT" "$DMG"
 
 (cd "$DIST" && /usr/bin/shasum -a 256 "$(basename "$DMG")" "$(basename "$SOURCE_ZIP")") > "$DIST/SHA256SUMS"
 printf 'Created installer: %s\nCreated corresponding source: %s\n' "$DMG" "$SOURCE_ZIP"
